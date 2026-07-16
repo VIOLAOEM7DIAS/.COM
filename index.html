@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acorde Certo — Método de Violão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #1b120e;
+    --panel: #261a14;
+    --panel-2: #30211a;
+    --gold: #c99a53;
+    --gold-bright: #e3b96a;
+    --cream: #ece2d0;
+    --cream-dim: #b8ab97;
+    --wine: #8a3b32;
+    --wine-bright: #b8483a;
+    --line: rgba(236,226,208,0.14);
+    --radius: 14px;
+    --display: 'Fraunces', serif;
+    --body: 'Manrope', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background: var(--bg);
+    color: var(--cream);
+    font-family: var(--body);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--gold); color:#1b120e;}
+  a{color:inherit;}
+  img{max-width:100%; display:block;}
+  button{font-family:inherit; cursor:pointer; border:none;}
+  .eyebrow{
+    font-family: var(--mono);
+    font-size:0.72rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color: var(--gold-bright);
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:0 22px;}
+
+  /* ---------- FRETBOARD DECOR (signature element) ---------- */
+  .fretboard-bg{
+    position:absolute; inset:0; opacity:0.16; pointer-events:none;
+  }
+  .fret-string{stroke: var(--cream); stroke-width:1;}
+  .fret-line{stroke: var(--gold); stroke-width:1.4;}
+
+  /* ---------- QUIZ SCREEN ---------- */
+  #quiz-screen{
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    position:relative;
+    padding:40px 20px;
+  }
+  .neck{
+    position:relative;
+    width:100%; max-width:420px;
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:34px;
+  }
+  .neck::before{
+    content:"";
+    position:absolute; left:0; right:0; top:50%; height:2px;
+    background: var(--line); transform:translateY(-50%);
+  }
+  .capo{
+    width:15px; height:15px; border-radius:50%;
+    background: var(--panel);
+    border:2px solid var(--line);
+    position:relative; z-index:1;
+    transition: all .35s ease;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .capo.done{ background: var(--gold); border-color: var(--gold); box-shadow:0 0 14px rgba(201,154,83,.6);}
+  .capo.active{ border-color: var(--gold-bright); }
+  .capo.active::after{
+    content:""; position:absolute; width:7px; height:7px; border-radius:50%;
+    background: var(--gold-bright);
+  }
+
+  .quiz-card{
+    width:100%; max-width:520px;
+    background: var(--panel);
+    border:1px solid var(--line);
+    border-radius: var(--radius);
+    padding:34px 28px;
+  }
+  .quiz-card h2{
+    font-family: var(--display);
+    font-weight:600;
+    font-size:1.5rem;
+    line-height:1.3;
+    margin-bottom:22px;
+    color: var(--cream);
+  }
+  .quiz-opt{
+    display:flex; align-items:center; gap:12px;
+    width:100%;
+    text-align:left;
+    background: var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:10px;
+    color: var(--cream);
+    font-size:0.98rem;
+    transition: border-color .2s, background .2s, transform .15s;
+  }
+  .quiz-opt:hover{ border-color: var(--gold); background:#3a2a20; transform: translateX(3px); }
+  .quiz-opt .tag{
+    font-family: var(--mono); font-size:0.7rem; color: var(--gold-bright); flex-shrink:0;
+  }
+  .quiz-foot{
+    margin-top:18px; text-align:center; font-size:0.78rem; color: var(--cream-dim);
+  }
+
+  /* loading screen */
+  #loading-screen{
+    min-height:100vh; display:none; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:20px;
+  }
+  #loading-screen p{ font-family:var(--display); font-size:1.2rem; margin-bottom:22px; }
+  .bar-track{ width:260px; height:6px; background:var(--panel-2); border-radius:4px; overflow:hidden; border:1px solid var(--line);}
+  .bar-fill{ height:100%; width:0%; background: linear-gradient(90deg,var(--gold),var(--gold-bright)); transition:width 1.7s ease; }
+  .loading-sub{ margin-top:14px; font-family:var(--mono); font-size:0.72rem; color:var(--cream-dim); letter-spacing:0.06em;}
+
+  /* ---------- SALES PAGE ---------- */
+  #sales-page{ display:none; }
+
+  .hero{
+    position:relative;
+    padding:70px 0 60px;
+    border-bottom:1px solid var(--line);
+    overflow:hidden;
+  }
+  .hero-inner{ position:relative; z-index:1; text-align:center; }
+  .hero h1{
+    font-family: var(--display);
+    font-weight:700;
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height:1.12;
+    margin:18px 0 16px;
+  }
+  .hero h1 em{ font-style:normal; color: var(--gold-bright); }
+  .hero p.sub{
+    font-size:1.05rem; color: var(--cream-dim);
+    max-width:520px; margin:0 auto 30px;
+  }
+  .cta-btn{
+    display:inline-flex; align-items:center; gap:10px;
+    background: var(--gold);
+    color:#1b120e;
+    font-weight:800;
+    font-size:1rem;
+    padding:16px 30px;
+    border-radius:10px;
+    transition: transform .15s, background .2s;
+  }
+  .cta-btn:hover{ background: var(--gold-bright); transform: translateY(-2px); }
+  .cta-note{ margin-top:12px; font-size:0.78rem; color:var(--cream-dim); font-family:var(--mono);}
+
+  section{ padding:56px 0; border-bottom:1px solid var(--line); }
+  h2.section-title{
+    font-family: var(--display); font-weight:600;
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    margin-bottom:8px;
+  }
+  .section-lead{ color:var(--cream-dim); margin-bottom:34px; max-width:560px; }
+
+  /* problem */
+  .pain-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .pain-item{
+    background: var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px;
+    font-size:0.94rem;
+  }
+  .pain-item .mark{ color: var(--wine-bright); font-family:var(--mono); font-size:0.8rem; }
+
+  /* modules - track list style */
+  .track-list{ border-top:1px solid var(--line); }
+  .track{
+    display:grid; grid-template-columns:44px 1fr auto; align-items:start; gap:16px;
+    padding:20px 0; border-bottom:1px solid var(--line);
+  }
+  .track .num{ font-family:var(--mono); color:var(--gold-bright); font-size:0.85rem; padding-top:3px;}
+  .track h3{ font-family:var(--display); font-weight:600; font-size:1.08rem; margin-bottom:4px;}
+  .track p{ font-size:0.9rem; color:var(--cream-dim); }
+  .track .dur{ font-family:var(--mono); font-size:0.75rem; color:var(--cream-dim); white-space:nowrap; padding-top:4px;}
+
+  /* bonuses */
+  .bonus-card{
+    display:flex; gap:16px; align-items:flex-start;
+    background:var(--panel); border:1px solid var(--gold); border-radius:12px;
+    padding:20px; margin-bottom:14px;
+  }
+  .bonus-card .price-tag{
+    font-family:var(--mono); font-size:0.78rem; color:var(--gold-bright); white-space:nowrap;
+  }
+  .bonus-card h3{ font-family:var(--display); font-size:1.05rem; margin-bottom:4px; }
+  .bonus-card p{ font-size:0.9rem; color:var(--cream-dim); }
+
+  /* offer box */
+  .offer-box{
+    background: linear-gradient(160deg, var(--panel-2), var(--panel));
+    border:1px solid var(--gold);
+    border-radius:16px;
+    padding:38px 30px;
+    text-align:center;
+  }
+  .offer-box .old-price{ text-decoration:line-through; color:var(--cream-dim); font-family:var(--mono); font-size:1rem;}
+  .offer-box .new-price{ font-family:var(--display); font-weight:700; font-size:3rem; color:var(--gold-bright); line-height:1;}
+  .offer-box .new-price span{ font-size:1rem; font-family:var(--body); color:var(--cream-dim); font-weight:500;}
+  .offer-box .installment{ font-size:0.85rem; color:var(--cream-dim); margin:6px 0 24px; }
+
+  /* guarantee */
+  .guarantee{
+    display:flex; gap:20px; align-items:center;
+    background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:26px;
+  }
+  .seal{
+    flex-shrink:0; width:64px; height:64px; border-radius:50%;
+    border:2px solid var(--gold); display:flex; align-items:center; justify-content:center;
+    font-family:var(--display); font-weight:700; color:var(--gold-bright); font-size:0.85rem; text-align:center;
+  }
+
+  /* testimonials */
+  .testi{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:12px;
+  }
+  .testi p{ font-size:0.94rem; margin-bottom:12px; }
+  .testi-name{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:0.78rem; color:var(--cream-dim);}
+  .avatar{ width:30px; height:30px; border-radius:50%; background:var(--gold); color:#1b120e; font-weight:800; display:flex; align-items:center; justify-content:center; font-family:var(--body); font-size:0.85rem;}
+
+  /* faq */
+  .faq-item{ border-bottom:1px solid var(--line); }
+  .faq-q{
+    width:100%; background:none; color:var(--cream); text-align:left;
+    padding:18px 0; font-family:var(--display); font-size:1.02rem; font-weight:600;
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+  }
+  .faq-q .plus{ font-family:var(--mono); color:var(--gold-bright); font-size:1.1rem; transition:transform .2s;}
+  .faq-a{ max-height:0; overflow:hidden; transition:max-height .25s ease; font-size:0.92rem; color:var(--cream-dim);}
+  .faq-a p{ padding-bottom:18px; }
+  .faq-item.open .plus{ transform:rotate(45deg); }
+
+  .final-cta{ text-align:center; padding-top:60px; padding-bottom:80px; border-bottom:none;}
+  footer{ text-align:center; padding:26px 0 40px; font-size:0.78rem; color:var(--cream-dim); font-family:var(--mono);}
+
+  @media (max-width:640px){
+    .pain-grid{ grid-template-columns:1fr; }
+    .track{ grid-template-columns:32px 1fr; }
+    .track .dur{ grid-column:2; padding-top:0;}
+    .guarantee{ flex-direction:column; text-align:center; }
+    .quiz-card{ padding:26px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= QUIZ SCREEN ================= -->
+<section id="quiz-screen">
+  <svg class="fretboard-bg" viewBox="0 0 400 800" preserveAspectRatio="none">
+    <line class="fret-string" x1="120" y1="0" x2="120" y2="800"/>
+    <line class="fret-string" x1="160" y1="0" x2="160" y2="800"/>
+    <line class="fret-string" x1="200" y1="0" x2="200" y2="800"/>
+    <line class="fret-string" x1="240" y1="0" x2="240" y2="800"/>
+    <line class="fret-string" x1="280" y1="0" x2="280" y2="800"/>
+    <line class="fret-string" x1="320" y1="0" x2="320" y2="800"/>
+    <line class="fret-line" x1="0" y1="100" x2="400" y2="100"/>
+    <line class="fret-line" x1="0" y1="240" x2="400" y2="240"/>
+    <line class="fret-line" x1="0" y1="380" x2="400" y2="380"/>
+    <line class="fret-line" x1="0" y1="520" x2="400" y2="520"/>
+    <line class="fret-line" x1="0" y1="660" x2="400" y2="660"/>
+  </svg>
+
+  <div class="neck" id="neck"></div>
+
+  <div class="quiz-card">
+    <p class="eyebrow" id="quiz-step">Pergunta 1 de 5</p>
+    <h2 id="quiz-question" style="margin-top:10px;">Carregando...</h2>
+    <div id="quiz-options"></div>
+    <p class="quiz-foot">Leva menos de 40 segundos — no final você recebe seu perfil de aprendizado.</p>
+  </div>
+</section>
+
+<!-- ================= LOADING SCREEN ================= -->
+<section id="loading-screen">
+  <p class="eyebrow">montando seu perfil</p>
+  <p id="loading-text">Analisando suas respostas...</p>
+  <div class="bar-track"><div class="bar-fill" id="bar-fill"></div></div>
+  <p class="loading-sub" id="loading-sub">VERIFICANDO NÍVEL · DEFININDO PLANO · PRONTO</p>
+</section>
+
+<!-- ================= SALES PAGE ================= -->
+<div id="sales-page">
+
+  <header class="hero">
+    <div class="wrap hero-inner">
+      <p class="eyebrow">resultado do seu perfil</p>
+      <h1 id="hero-headline">Seu violão travado tem solução: <em>Acorde Certo</em></h1>
+      <p class="sub" id="hero-sub">O e-book direto ao ponto que tira você do zero (ou do "quase lá") até tocar suas primeiras músicas inteiras, sem enrolação e sem precisar de professor particular.</p>
+      <a href="#oferta" class="cta-btn">Quero destravar meu violão →</a>
+      <p class="cta-note">Acesso imediato após a compra · PDF + material de apoio</p>
+    </div>
+  </header>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">o que trava a maioria</p>
+      <h2 class="section-title">Você já deve ter passado por isso</h2>
+      <p class="section-lead">Não é falta de talento. É falta de um caminho claro — a maioria desiste nas primeiras semanas porque tenta aprender com vídeos soltos, sem sequência.</p>
+      <div class="pain-grid">
+        <div class="pain-item"><span class="mark">—</span> Aprende um acorde num vídeo, outro em outro canal, e nunca sabe o que vem depois.</div>
+        <div class="pain-item"><span class="mark">—</span> Trava na hora de trocar de acorde no meio da música.</div>
+        <div class="pain-item"><span class="mark">—</span> Dedo dói, some a vontade, o violão fica juntando poeira.</div>
+        <div class="pain-item"><span class="mark">—</span> Sabe uns acordes soltos, mas não sabe tocar uma música do início ao fim.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">o método</p>
+      <h2 class="section-title">O que tem dentro do Acorde Certo</h2>
+      <p class="section-lead">Um e-book em formato de trilha: cada capítulo destrava o próximo. Sem termos técnicos difíceis, sem precisar saber ler partitura.</p>
+      <div class="track-list">
+        <div class="track">
+          <span class="num">01</span>
+          <div><h3>Base zero: afinação e postura</h3><p>Como afinar sem app, segurar o violão certo e evitar dor nos dedos desde o primeiro dia.</p></div>
+          <span class="dur">12 pág.</span>
+        </div>
+        <div class="track">
+          <span class="num">02</span>
+          <div><h3>Os 7 acordes que abrem 80% das músicas</h3><p>A sequência exata pra aprender — nessa ordem, não em qualquer ordem.</p></div>
+          <span class="dur">18 pág.</span>
+        </div>
+        <div class="track">
+          <span class="num">03</span>
+          <div><h3>Troca de acordes sem travar</h3><p>Exercícios de transição pensados pra tirar aquele "buraco" no meio da música.</p></div>
+          <span class="dur">14 pág.</span>
+        </div>
+        <div class="track">
+          <span class="num">04</span>
+          <div><h3>Ritmo: a mão que a maioria ignora</h3><p>Batidas de balada, sertanejo e MPB explicadas passo a passo.</p></div>
+          <span class="dur">16 pág.</span>
+        </div>
+        <div class="track">
+          <span class="num">05</span>
+          <div><h3>Sua primeira música do início ao fim</h3><p>Cifra passo a passo pra você tocar uma música completa ainda essa semana.</p></div>
+          <span class="dur">10 pág.</span>
+        </div>
+        <div class="track">
+          <span class="num">06</span>
+          <div><h3>Como continuar evoluindo sozinho</h3><p>Método de prática de 15 minutos por dia pra nunca mais travar.</p></div>
+          <span class="dur">9 pág.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">bônus inclusos</p>
+      <h2 class="section-title">Pra sair na frente</h2>
+      <div class="bonus-card">
+        <div style="flex:1;"><h3>Banco de cifras — 50 músicas</h3><p>Repertório pronto separado por nível, pra você nunca ficar sem o que tocar.</p></div>
+        <span class="price-tag">bônus 1</span>
+      </div>
+      <div class="bonus-card">
+        <div style="flex:1;"><h3>Checklist de prática diária</h3><p>Um guia de 15 minutos por dia pra manter a evolução mesmo na correria.</p></div>
+        <span class="price-tag">bônus 2</span>
+      </div>
+      <div class="bonus-card">
+        <div style="flex:1;"><h3>Guia de manutenção do violão</h3><p>Como trocar corda, ajustar afinação e cuidar do instrumento.</p></div>
+        <span class="price-tag">bônus 3</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="oferta">
+    <div class="wrap">
+      <div class="offer-box">
+        <p class="eyebrow">condição de hoje</p>
+        <p class="old-price">de R$127,00</p>
+        <p class="new-price">R$47<span>,00 à vista</span></p>
+        <p class="installment">ou em até 12x no cartão</p>
+        <a href="#" class="cta-btn" id="main-cta">Garantir meu acesso agora →</a>
+        <p class="cta-note">Pagamento processado via Kirvano · acesso liberado na hora</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="guarantee">
+        <div class="seal">7 DIAS<br>GARANTIA</div>
+        <p>Você tem 7 dias pra testar o método. Se sentir que não é pra você, devolvemos 100% do valor, sem perguntas e sem burocracia.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">exemplo de layout — substitua por depoimentos reais</p>
+      <h2 class="section-title">O que dizem quem já usou o método</h2>
+      <div class="testi">
+        <p>"Eu travava toda vez que tinha que trocar de acorde. Depois de duas semanas seguindo a ordem do e-book, toquei minha primeira música inteira."</p>
+        <div class="testi-name"><span class="avatar">M</span> Marcos, aluno do método</div>
+      </div>
+      <div class="testi">
+        <p>"Não sabia nem seguravar o violão direito. O passo a passo foi bem mais fácil de seguir do que vídeo solto no Youtube."</p>
+        <div class="testi-name"><span class="avatar">J</span> Juliana, aluna do método</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">perguntas frequentes</p>
+      <h2 class="section-title">Ainda com dúvida?</h2>
+      <div id="faq-list">
+        <div class="faq-item">
+          <button class="faq-q">Preciso já saber tocar alguma coisa? <span class="plus">+</span></button>
+          <div class="faq-a"><p>Não. O método foi pensado pra quem nunca encostou num violão até quem já sabe uns acordes soltos e quer destravar.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">É um e-book em PDF ou tem vídeo? <span class="plus">+</span></button>
+          <div class="faq-a"><p>É um e-book em PDF, com passo a passo escrito e ilustrado, pra você seguir no seu ritmo, no celular ou computador.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">Em quanto tempo recebo o acesso? <span class="plus">+</span></button>
+          <div class="faq-a"><p>Na hora. Assim que o pagamento é confirmado, o acesso é liberado automaticamente por e-mail.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">E se eu não gostar? <span class="plus">+</span></button>
+          <div class="faq-a"><p>Você tem 7 dias de garantia incondicional. Se não for pra você, devolvemos o valor integral.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final-cta" style="border-bottom:none;">
+    <div class="wrap">
+      <h2 class="section-title">Seu próximo passo é simples</h2>
+      <p class="section-lead" style="margin-left:auto; margin-right:auto;">Daqui um mês você pode estar exatamente onde está hoje — ou tocando sua primeira música inteira. A diferença é começar agora.</p>
+      <a href="#oferta" class="cta-btn">Quero começar hoje →</a>
+    </div>
+  </section>
+
+  <footer>ACORDE CERTO © 2026 · substitua por seus dados/CNPJ antes de publicar</footer>
+</div>
+
+<script>
+  const questions = [
+    {
+      q: "Qual é hoje sua relação com o violão?",
+      opts: [
+        {label:"Nunca peguei num violão", tag:"A"},
+        {label:"Sei uns acordes soltos", tag:"B"},
+        {label:"Toco, mas travo nas trocas", tag:"C"},
+        {label:"Já manjo, quero mais repertório", tag:"D"},
+      ]
+    },
+    {
+      q: "O que mais te atrapalha hoje?",
+      opts: [
+        {label:"Não sei por onde começar", tag:"A"},
+        {label:"Dedo dói e trava", tag:"B"},
+        {label:"Não sei acompanhar uma música inteira", tag:"C"},
+        {label:"Falta de tempo pra praticar", tag:"D"},
+      ]
+    },
+    {
+      q: "Quanto tempo por dia você consegue dedicar?",
+      opts: [
+        {label:"Uns 10 minutos", tag:"A"},
+        {label:"20 a 30 minutos", tag:"B"},
+        {label:"1 hora ou mais", tag:"C"},
+      ]
+    },
+    {
+      q: "Qual é o seu sonho com o violão?",
+      opts: [
+        {label:"Tocar numa roda com amigos", tag:"A"},
+        {label:"Tocar na igreja", tag:"B"},
+        {label:"Postar tocando nas redes", tag:"C"},
+        {label:"Só relaxar sozinho em casa", tag:"D"},
+      ]
+    },
+    {
+      q: "Se você destravasse isso em poucas semanas, o que mudaria?",
+      opts: [
+        {label:"Minha confiança pra tocar perto de gente", tag:"A"},
+        {label:"Eu finalmente terminaria uma música", tag:"B"},
+        {label:"Eu pararia de me sentir travado(a)", tag:"C"},
+      ]
+    },
+  ];
+
+  let current = 0;
+  const answers = [];
+  const neck = document.getElementById('neck');
+  const stepEl = document.getElementById('quiz-step');
+  const qEl = document.getElementById('quiz-question');
+  const optsEl = document.getElementById('quiz-options');
+
+  function buildNeck(){
+    neck.innerHTML = '';
+    questions.forEach((_, i) => {
+      const c = document.createElement('div');
+      c.className = 'capo';
+      c.id = 'capo-' + i;
+      neck.appendChild(c);
+    });
+  }
+
+  function refreshNeck(){
+    questions.forEach((_, i) => {
+      const c = document.getElementById('capo-' + i);
+      c.classList.remove('active','done');
+      if(i < current) c.classList.add('done');
+      else if(i === current) c.classList.add('active');
+    });
+  }
+
+  function renderQuestion(){
+    const item = questions[current];
+    stepEl.textContent = `Pergunta ${current + 1} de ${questions.length}`;
+    qEl.textContent = item.q;
+    optsEl.innerHTML = '';
+    item.opts.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-opt';
+      btn.innerHTML = `<span class="tag">${opt.tag}</span><span>${opt.label}</span>`;
+      btn.onclick = () => selectOption(opt.tag);
+      optsEl.appendChild(btn);
+    });
+    refreshNeck();
+  }
+
+  function selectOption(tag){
+    answers.push(tag);
+    current++;
+    if(current < questions.length){
+      renderQuestion();
+    } else {
+      refreshNeck();
+      showLoading();
+    }
+  }
+
+  function showLoading(){
+    document.getElementById('quiz-screen').style.display = 'none';
+    const loading = document.getElementById('loading-screen');
+    loading.style.display = 'flex';
+    setTimeout(() => { document.getElementById('bar-fill').style.width = '100%'; }, 100);
+    setTimeout(showSales, 1900);
+  }
+
+  function profileFor(firstAnswer){
+    const map = {
+      A: { title: "Perfil: Começando do Absoluto Zero", sub: "Você está no ponto exato pra aprender do jeito certo, sem os erros de quem tenta sozinho no Youtube. O Acorde Certo te leva do primeiro acorde até sua primeira música tocada por inteiro." },
+      B: { title: "Perfil: Você já tem base — falta ordem", sub: "Você já sabe uns acordes, mas sem uma sequência clara é fácil travar. O Acorde Certo organiza o que você já sabe e completa o que falta." },
+      C: { title: "Perfil: Prestes a destravar de vez", sub: "O travamento na troca de acordes é a barreira mais comum — e a mais fácil de resolver com o exercício certo. É exatamente o capítulo 3 do método." },
+      D: { title: "Perfil: Pronto pra ampliar repertório", sub: "Você já manja o básico. Agora é hora de expandir repertório e afinar o ritmo — os capítulos 4 e 5 foram feitos pra isso." },
+    };
+    return map[firstAnswer] || map.A;
+  }
+
+  function showSales(){
+    document.getElementById('loading-screen').style.display = 'none';
+    const sales = document.getElementById('sales-page');
+    sales.style.display = 'block';
+    const profile = profileFor(answers[0]);
+    document.getElementById('hero-headline').innerHTML = profile.title.replace('Perfil: ', '') + ': conheça o <em>Acorde Certo</em>';
+    document.getElementById('hero-sub').textContent = profile.sub;
+    window.scrollTo(0,0);
+  }
+
+  buildNeck();
+  renderQuestion();
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-item').forEach(item => {
+    const btn = item.querySelector('.faq-q');
+    const ans = item.querySelector('.faq-a');
+    btn.addEventListener('click', () => {
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => { i.classList.remove('open'); i.querySelector('.faq-a').style.maxHeight = null; });
+      if(!isOpen){
+        item.classList.add('open');
+        ans.style.maxHeight = ans.scrollHeight + 'px';
+      }
+    });
+  });
+
+  // Replace this with your real Kirvano checkout link
+  document.querySelectorAll('#main-cta, .cta-btn[href="#oferta"]').forEach(el => {});
+  document.getElementById('main-cta').href = "https://pay.kirvano.com/902fb8c6-5d67-44f3-8833-0db1ac687663";
+</script>
+</body>
+</html>
